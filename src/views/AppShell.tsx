@@ -454,7 +454,7 @@ export default function AppShell({ v }: Props) {
                           {"No contacts match"}
                         </div>
                         <div style={{"fontSize":"13px","color":"var(--dim)","marginTop":"6px"}}>
-                          {"Try fewer words — it matches on name, role, organisation and tag."}
+                          {"Try fewer words. It matches on name, role, organisation and tag."}
                         </div>
                       </div>
                     </>
@@ -775,7 +775,7 @@ export default function AppShell({ v }: Props) {
                 <>
                   <div style={{"padding":"8px 24px 4px","animation":"expandIn .3s var(--ease) both"}}>
                     <div style={{"fontFamily":"var(--mono)","fontSize":"9.5px","letterSpacing":"0.13em","color":"var(--faint)","marginTop":"10px"}}>
-                      {"PULSE BUILT THIS — EDIT ANYTHING"}
+                      {"PULSE BUILT THIS · EDIT ANYTHING"}
                     </div>
                     <div style={{"marginTop":"14px"}}>
                       {arr(v.builder?.blocks).map((b: any, i145: number) => (

@@ -10,7 +10,7 @@ import type {
    numbers fall out of the records rather than being typed in:
      47 unanswered enquiries · 25 quotes awaiting approval · 18 freight rates
      outstanding · 11 overdue invoices worth €46,820 · 32 follow-ups to review.
-   The 163 requests Niall reported for 14–17 Nov is a separate historical note
+   The 163 requests Niall reported for 14 to 17 Nov is a separate historical note
    (see HISTORY in select.ts), not part of this dataset.
    Timestamps are offsets from page load, so the snapshot always reads as "now".
    ───────────────────────────────────────────────────────────────────────────── */
@@ -1048,7 +1048,7 @@ T("Confirm dimensions for Leverage Seated Row (catalogue says TBC)", "Natalie", 
 T("Allocate the 6 unallocated Flex units", "Niall", 3, "Medium", "Stock", "Not started", "shipment", "SH-FLEX-NOV");
 T("Reconcile FreshBooks payments for week 47", "Receivables Agent", 1, "Low", "Finance", "In progress", "invoice", "FB-1059");
 T("Send trade price list to new distributor enquiries", "Niall", 2, "Medium", "Sales", "Not started", "enquiry", unanswered.find((x) => x.e.qualification === "Wholesale / distributor")?.e.id || "ENQ-4562");
-T("File signed Danube delivery note once received", "Niall", 9, "Low", "Sales", "Done", "quote", "Q-2286");
+T("Send Rotterdam Iron Supply the EUR trade price list", "Niall", -4, "Medium", "Sales", "Done", "quote", "Q-2271");
 
 /* ═══════════════════════ AGENT ROUTINES IN THE LOG ═══════════════════════ */
 

@@ -94,16 +94,16 @@ export default class PulseLogic extends DCLogic {
             done:{}, resolved:{}, approved:{}, inboxFilter:"All", approvalFilter:"Awaiting you", open:null, range:"30d",
             workDoc:null, workDocTab:"work",
             queue:"mine", recordTab:"Overview", record:"person", hovered:null, hoverLabel:"", hoverHint:"", hoverTop:0,
-            flags:{approvals:true, automations:true, insights:true, customEntities:false, whatsapp:true, composio:false},
+            flags:{approvals:true, automations:true, insights:true, customEntities:false, emailDrafts:true, composio:false},
             workSection:"tasks", workViews:{}, addedTasks:[], newTask:"", newPriority:"Medium",
             timerRunning:false, timerTask:null, timerPreset:null, scheduleOff:{},
             adminCard:null, adminFlags:{},
             adminOpen:null, adminFlags:{}, adminGroup:null,
             actPaused:false, actHover:null, actKpi:"all", actQuery:"", actOpen:null, actTick:0,
             recSection:"ontology", recAsk:"", treeOpen:true, treeExpanded:{}, treeFile:"fl-1", treeQuery:"",
-            ontoNode:"Organisation", ontoHover:null, ontoLayout:"Force",
+            ontoNode:"Quote", ontoHover:null, ontoLayout:"Force",
             newRecOpen:false, newRecName:"", newRecTemplate:"Field sheet", newRecCat:"All",
-            opsFilter:"all", opsOff:{}, opsOpen:null, opsScope:"week", opsDay:26, opsOrder:null, opsDrag:null,
+            opsFilter:"all", opsOff:{}, opsOpen:null, opsScope:"week", opsDay:new Date().getDate(), opsOrder:null, opsDrag:null,
             opsBuilderOpen:false, opsBuilderMode:"workflow", builderText:"", builderGenerated:false,
             railOpen:true, barOpen:true, chatRailPinned:false, widgetEdit:false, widgets:["inbox","work","activity"],
             kpiEdit:false, kpiKeys:["unanswered","quotes","freight","overdue","overdueValue","followups"],
@@ -1035,7 +1035,7 @@ export default class PulseLogic extends DCLogic {
       if (asked < BRIEF_QUESTIONS.length){
         thread.push({kind:"msg", role:"agent",
           text: asked === 0
-            ? "\u201c" + text + "\u201d — I can do that. First, what should it cover?"
+            ? "\u201c" + text + "\u201d: I can do that. First, what should it cover?"
             : "Noted. One more: when should it land?"});
         thread.push({kind:"card", q:asked, done:false});
       } else {
@@ -1136,7 +1136,7 @@ export default class PulseLogic extends DCLogic {
       tuneDraft:"",
       tuneThread: (prev.tuneThread || []).concat([
         {role:"you", text},
-        {role:"agent", text:"Done — I pinned that to my prompt. It takes effect on the next run."}
+        {role:"agent", text:"Done. I pinned that to my prompt. It takes effect on the next run."}
       ]),
       sysPrompt: this.systemPrompt(prev) + "\n" + text
     }));
@@ -1319,7 +1319,7 @@ export default class PulseLogic extends DCLogic {
     this.setState(prev => {
       const extra = (prev.agentExtra[id] || []).concat([
         {kind:"user", text:q},
-        {kind:"agent", text:"on it. i'll come back when there's something to decide — nothing that changes a record goes through without your yes."}
+        {kind:"agent", text:"on it. i'll come back when there's something to decide. nothing that changes a record goes through without your yes."}
       ]);
       return {agentExtra: Object.assign({}, prev.agentExtra, {[id]: extra}), agentDraft:""};
     });
@@ -1537,8 +1537,14 @@ export default class PulseLogic extends DCLogic {
       return w ? {day:e[0], name:w.name, color:STATUS_TINT[opsStatusOf(w)][0]} : null; }).filter(Boolean);
     const eventsFor = (d) => MONTH_EVENTS.filter(e => e.day === d);
 
+    const NOWD = new Date(), TODAY = NOWD.getDate();
+    const DIM_ = new Date(NOWD.getFullYear(), NOWD.getMonth() + 1, 0).getDate();
+    const FIRST_ = (new Date(NOWD.getFullYear(), NOWD.getMonth(), 1).getDay() + 6) % 7;
+    const MONTH_GRID = Array(FIRST_).fill(null).concat(Array.from({length: DIM_}, (_, i) => i + 1));
+    const WEEK_GRID = Array.from({length: 7}, (_, i) => TODAY - ((NOWD.getDay() + 6) % 7) + i).map(d => (d >= 1 && d <= DIM_ ? d : null));
+    const MON_ABBR = NOWD.toLocaleDateString("en-GB", {month:"short"}), MON_LONG = NOWD.toLocaleDateString("en-GB", {month:"long", year:"numeric"});
     const calModel = {
-      monthLabel: st.opsScope === "week" ? "This week · 26 Aug" : "August 2026",
+      monthLabel: st.opsScope === "week" ? "This week · " + TODAY + " " + MON_ABBR : MON_LONG,
       hint: "Everything Pulse will do on its own, and when.",
       load: (st.opsOrder || ["o5","o2","o3","o10","o4","o6","o9","o8"]).length + " routines",
       scopes: [["week","Week"],["month","Month"]].map(s => ({label:s[1],
@@ -1547,9 +1553,7 @@ export default class PulseLogic extends DCLogic {
         pick: () => this.setState({opsScope:s[0]})})),
       dayNames: ["MON","TUE","WED","THU","FRI","SAT","SUN"],
       cellH: st.opsScope === "week" ? "height:118px" : "height:96px",
-      days: (st.opsScope === "week" ? [24,25,26,27,28,29,30]
-        : [null,null,null,null,null,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]
-      ).map(d => {
+      days: (st.opsScope === "week" ? WEEK_GRID : MONTH_GRID).map(d => {
         if (d === null) return {date:"", pick:() => {}, chips:[], hasMore:false,
           cellStyle: st.opsScope === "week" ? "height:118px" : "height:96px" + ";border-radius:var(--r-sm,9px);background:none;border:1px dashed var(--border)"};
         const today = d === 26, sel = st.opsDay === d && !today;
@@ -1573,8 +1577,8 @@ export default class PulseLogic extends DCLogic {
           hasMore: more > 0, moreLabel: "+" + more + " more",
           pick: () => this.setState({opsDay:d})};
       }),
-      monthTitle: "August 2026",
-      monthDays: [null,null,null,null,null,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31].map(d => {
+      monthTitle: MON_LONG,
+      monthDays: MONTH_GRID.map(d => {
         if (d === null) return {date:"", pick:() => {}, chips:[], hasMore:false, moreLabel:"",
           cellStyle:"min-height:104px;border-radius:var(--r-sm,9px);background:none;border:1px dashed var(--border)"};
         const today = d === 26, sel = st.opsDay === d && !today;
@@ -1605,7 +1609,7 @@ export default class PulseLogic extends DCLogic {
         const busiest = Object.keys(DAY_LOAD).reduce((a, b) => DAY_LOAD[b] > DAY_LOAD[a] ? b : a, "24");
         return [
           {label:"Runs this week", value:String(runs), note:"across " + sched.length + " routines"},
-          {label:"Busiest day", value:busiest + " Aug", note:DAY_LOAD[busiest] + " scheduled runs"},
+          {label:"Busiest day", value:busiest + " " + MON_ABBR, note:DAY_LOAD[busiest] + " scheduled runs"},
           {label:"Needs a person", value:String(OPS_DEFS.filter(w => opsStatusOf(w) === "approval").length), note:"waiting on an approval"},
           {label:"Failing", value:String(OPS_DEFS.filter(w => opsStatusOf(w) === "failed").length), note:"routines to look at"},
           {label:"Time saved", value:hours + "h", note:"per month, all routines"},
@@ -1627,10 +1631,10 @@ export default class PulseLogic extends DCLogic {
           knobBg: on ? "var(--on-accent)" : DIM,
           toggle: () => this.setState(prev => ({opsOff: Object.assign({}, prev.opsOff, {[w.id]: on})}))};
       }),
-      agendaTitle: st.opsDay === 26 ? "Today" : "Wed " + st.opsDay + " Aug",
+      agendaTitle: st.opsDay === TODAY ? "Today" : new Date(NOWD.getFullYear(), NOWD.getMonth(), st.opsDay).toLocaleDateString("en-GB", {weekday:"short", day:"numeric", month:"short"}),
       dragHint: true,
       agenda: (st.opsOrder || ["o5","o2","o3","o10","o4","o6","o9","o8"]).map(id => OPS_DEFS.find(w => w.id === id)).filter(Boolean).map(w => ({
-        time: (w.trigger.match(/\d{2}:\d{2}/) || ["—"])[0],
+        time: (w.trigger.match(/\d{2}:\d{2}/) || ["Any time"])[0],
         name:w.name, owner:w.owner,
         color: STATUS_TINT[opsStatusOf(w)][0],
         opacity: st.opsDrag === w.id ? "0.5" : "1",
@@ -1686,10 +1690,10 @@ export default class PulseLogic extends DCLogic {
     const BUILDER_COPY = {
       workflow: {title:"Create a workflow", hint:"PLAIN ENGLISH FIRST",
         placeholder:"Every Friday, review all open deals. Flag anything inactive for 10 days and prepare a summary for management.",
-        examples:["Chase quotes nobody replied to","Warn me before a certificate lapses"], save:"Create workflow"},
+        examples:["Chase quotes nobody replied to","Warn me when a carrier is late on a rate"], save:"Create workflow"},
       schedule: {title:"Schedule a task", hint:"RECURRING WORK",
         placeholder:"Every Thursday at 9am, check stock against this week's jobs and raise the order lines.",
-        examples:["Monthly VAT return reminder","Weekly van checks"], save:"Schedule it"},
+        examples:["Weekly receivables summary","Monthly website availability check"], save:"Schedule it"},
       teach: {title:"Teach an agent", hint:"A NEW ROUTINE FOR AN AGENT",
         placeholder:"When an invoice goes past 60 days, tell me what changed about how that customer pays before you draft anything.",
         examples:["Watch payment behaviour","Summarise the week for management"], save:"Teach it"}
@@ -1700,7 +1704,7 @@ export default class PulseLogic extends DCLogic {
       placeholder:BUILDER_COPY.placeholder, saveLabel:BUILDER_COPY.save,
       text: st.builderText, generated: st.builderGenerated,
       generateLabel: st.builderGenerated ? "Rebuild from the description" : "Build it",
-      footer: st.builderGenerated ? "Steps with effects always wait for your yes" : "Describe the outcome — Pulse works out the steps",
+      footer: st.builderGenerated ? "Steps with effects always wait for your yes" : "Describe the outcome; Pulse works out the steps",
       examples: BUILDER_COPY.examples.map(e => ({label:e, use: () => this.setState({builderText:e, builderGenerated:false})})),
       setText: (e) => this.setState({builderText:e.target.value}),
       generate: () => this.setState({builderGenerated:true}),
@@ -1712,7 +1716,7 @@ export default class PulseLogic extends DCLogic {
         ["CONDITION", "Skip deals already marked won or lost", "", "var(--border)", "var(--faint)"],
         ["ACTION", "Flag each one and write a management summary", "", "var(--border)", "var(--faint)"],
         ["AGENT", "Sales Agent", "It already has the deal context", "var(--border)", "var(--faint)"],
-        ["APPROVAL", "None — nothing leaves Pulse", "Add one if you want it emailed out", "var(--warn-soft)", AMBER],
+        ["APPROVAL", "None: nothing leaves Pulse", "Add one if you want it emailed out", "var(--warn-soft)", AMBER],
         ["ON FAILURE", "Retry twice, then tell Operations", "", "var(--border)", "var(--faint)"],
         ["NOTIFY", "Post to Home and the management group", "", "var(--border)", "var(--faint)"]
       ].map(b => ({label:b[0], value:b[1], note:b[2], border:b[3], labelColor:b[4], edit: () => {}}))
@@ -1762,7 +1766,7 @@ export default class PulseLogic extends DCLogic {
 
     const HERO = {
       contacts:{eyebrow:"CONTACTS · " + CONTACTS.length + " ON FILE", title:"Everyone you deal with",
-        blurb:"Staff and external in one place. Ask in your own words — it matches on name, role, organisation and tag.",
+        blurb:"Customers, carriers and the team in one place. Ask in your own words: it matches on name, role, organisation and tag.",
         placeholder:"Try “Italy”, “carrier”, “distributor”…", kind:"KEYWORD", scroll:"SCROLL FOR THE FULL LIST",
         suggestions:["Italy","carrier","Danube","distributor"]},
       files:{eyebrow:"FILES · " + FILE_TREE.filter(r => r.type === "file").length + " DOCUMENTS",
@@ -1801,7 +1805,7 @@ export default class PulseLogic extends DCLogic {
       askAnswer: recSec.id === "files"
         ? (fileHits ? fileHits + " of " + FILE_TREE.filter(r => r.type === "file").length + " documents contain that" : "No document contains that")
         : (matchedContacts.length
-          ? matchedContacts.length + " of " + CONTACTS.length + " match — on name, role, organisation and tag"
+          ? matchedContacts.length + " of " + CONTACTS.length + " match on name, role, organisation and tag"
           : "Nothing matched. It searches name, role, organisation and tag only."),
       askTerms,
       askSuggestions: HERO.suggestions.map(s => ({label:s,
@@ -1923,7 +1927,7 @@ export default class PulseLogic extends DCLogic {
       addAccount: () => {
         const f = st.peopleForm || {};
         if (!f.name || !f.email) return;
-        const entry = [f.name, "Invited", f.email, "—", "active", f.role || "Standard", "Just invited"];
+        const entry = [f.name, "Invited", f.email, "Not set", "active", f.role || "Standard", "Just invited"];
         this.setState(p => ({peopleExtra: (p.peopleExtra || []).concat([entry]), peopleAddOpen:false, peopleForm:{name:"",email:"",role:"Standard"}}));
       },
       rows: roster.map((p, i) => {
@@ -2030,9 +2034,9 @@ export default class PulseLogic extends DCLogic {
     const adminModel = {
       company: "Mega Mass Europe",
       urgent: [
-        ["3", "employees awaiting access", AMBER, "var(--warn-soft)", "people"],
-        ["1", "integration disconnected", RED, "var(--bad-soft)", "integrations"],
-        ["74", "duplicate records", AMBER, "var(--warn-soft)", "health"],
+        ["2", "carriers to confirm", AMBER, "var(--warn-soft)", "integrations"],
+        ["1", "integration inactive (HubSpot)", AMBER, "var(--warn-soft)", "integrations"],
+        ["3", "website labels out of date", AMBER, "var(--warn-soft)", "health"],
         ["2", "security recommendations", AMBER, "var(--warn-soft)", "security"]
       ].map(u => ({count:u[0], label:u[1], dot:u[2], border:u[3],
         go: () => this.setState({adminOpen:u[4]})})),
@@ -2171,7 +2175,7 @@ export default class PulseLogic extends DCLogic {
       .filter(e => { const k = e.title + "|" + e.actor + "|" + e.rel; if (seenTri[k]) return false; seenTri[k] = 1; return true; })
       .sort((a, b) => a.at - b.at);
     const WHY = {
-      failed: ["Nothing was lost — the work is queued and posts on reconnect.", "Retry", "Open the connection"],
+      failed: ["Nothing was lost: the work is queued and posts on reconnect.", "Retry", "Open the connection"],
       awaiting: ["Drafted and parked. It only moves when you say yes.", "Review and decide", "Open the record"]
     };
     const triageGroups = [
@@ -2237,7 +2241,7 @@ export default class PulseLogic extends DCLogic {
           ? "Everything that stopped working or is parked waiting on a decision, oldest first. Nothing here has been lost."
           : peopleLens
             ? "42 of 48 staff have used Pulse today. Every edit, approval and decision below is written against the person who made it."
-            : "Data arriving, people acting and agents working — then the audit trail underneath.",
+            : "Data arriving, people acting and agents working, then the audit trail underneath.",
       peopleKpis: [
         ["Active today", "42 of 48", "signed in and working", LIME],
         ["Decisions made", "27", "approvals and sign-offs", GREEN],
@@ -2253,7 +2257,7 @@ export default class PulseLogic extends DCLogic {
       attentionKpis: [
         ["Failed", String(attentionItems.filter(e => e.status === "failed").length), "queued, nothing lost", RED],
         ["Awaiting your yes", String(attentionItems.filter(e => e.status === "awaiting").length), "drafted, never sent", AMBER],
-        ["Oldest wait", attentionItems.length ? shortAgo(attentionItems[0].at) : "—", "since it was raised", "#6ad0f0"],
+        ["Oldest wait", attentionItems.length ? shortAgo(attentionItems[0].at) : "none", "since it was raised", "#6ad0f0"],
         ["Retried automatically", "12", "cleared without you", LIME]
       ].map((k, ki) => ({label:k[0], value:k[1], hint:k[2], dot:k[3],
         valueColor: k[3] === RED || k[3] === AMBER ? k[3] : INK,
@@ -2372,9 +2376,19 @@ export default class PulseLogic extends DCLogic {
 
     const g = this.graph, live = this.searches || [];
     const PHASE_WORD = {sweep:"expanding", path:"tracing", hold:"matched", fade:"clearing"};
+    /* Header and legend counts come from the Mega Mass store, so the ontology
+       agrees with every other page. The canvas keeps its own layout. */
+    const REC_TOTAL = MMS.customers.length + MMS.contacts.length + MMS.suppliers.length + MMS.products.length + MMS.enquiries.length
+      + MMS.quotes.length + MMS.freight.length + MMS.invoices.length + MMS.payments.length + MMS.orders.length + MMS.reservations.length
+      + MMS.followUps.length + MMS.approvals.length + MMS.emails.length + MMS.activity.length + MMS.runs.length + MMS.tasks.length;
+    const REL_TOTAL = MMS.enquiries.length * 2 + MMS.quotes.length * 2 + MMS.freight.length * 2 + MMS.orders.length * 3 + MMS.invoices.length * 2
+      + MMS.payments.length + MMS.reservations.length * 3 + MMS.emails.length + MMS.activity.length + MMS.runs.length + MMS.followUps.length * 2
+      + MMS.approvals.length * 2 + MMS.tasks.length + MMS.contacts.length;
+    const CLUSTER_N = {Customers: MMS.customers.length, Enquiries: MMS.enquiries.length, Quotes: MMS.quotes.length, Freight: MMS.freight.length,
+      Invoices: MMS.invoices.length, Machines: MMS.products.length, Orders: MMS.orders.length, Approvals: MMS.approvals.length};
     const graphModel = {
-      nodeCount: g ? g.nodes.length.toLocaleString("en-IE") : "—",
-      edgeCount: g ? g.edges.length.toLocaleString("en-IE") : "—",
+      nodeCount: REC_TOTAL.toLocaleString("en-IE"),
+      edgeCount: REL_TOTAL.toLocaleString("en-IE"),
       running: live.filter(s => s.delay <= 0).length + " OF " + live.length,
       queries: live.map((s, i) => {
         const settled = Math.min(s.order.length, Math.floor(s.reveal));
@@ -2390,10 +2404,10 @@ export default class PulseLogic extends DCLogic {
       }),
       run: () => { if ((st.ontoQuery || "").trim()) this.runOntoQuery(); else this.planSearch(); try { this.setState({gTick: Math.random()}); } catch (e) {} },
       legend: CLUSTERS.map((c, i) => ({label:c[0], bg:c[1],
-        count: g ? String((this._legendCounts || (this._legendCounts = (() => {
+        count: CLUSTER_N[c[0]] !== undefined ? String(CLUSTER_N[c[0]]) : g ? String((this._legendCounts || (this._legendCounts = (() => {
           const c = new Array(CLUSTERS.length).fill(0);
           for (const nd of g.nodes) if (nd.kind !== "core" && nd.cluster >= 0) c[nd.cluster]++;
-          return c; })()))[i]) : "—"}))
+          return c; })()))[i]) : "0"}))
     };
 
     const oq = st.ontoQuery || "", ontoSearchRes = st.ontoResult;
@@ -2409,7 +2423,7 @@ export default class PulseLogic extends DCLogic {
       fromLabel: ontoSearchRes ? ontoSearchRes.from : "", toLabel: ontoSearchRes ? ontoSearchRes.to : "",
       hopsLabel: ontoSearchRes && ontoSearchRes.hops != null ? ontoSearchRes.hops + " hop" + (ontoSearchRes.hops === 1 ? "" : "s") + " between records" : "",
       connectedLabel: ontoSearchRes && ontoSearchRes.connected
-        ? (ontoSearchRes.connected.length ? "Also connected to " + ontoSearchRes.connected.join(", ") : "No other clusters reached this time — try again")
+        ? (ontoSearchRes.connected.length ? "Also connected to " + ontoSearchRes.connected.join(", ") : "No other clusters reached this time, try again")
         : ""
     };
 
@@ -2612,8 +2626,8 @@ export default class PulseLogic extends DCLogic {
       let kindIcon = "M6 3.5h9l3.5 3.5v13.5H6Z M15 3.5V7h3.5";
       if (w.kind === "table"){
         facts = [["Lines", String((w.rows || []).length)],
-                 ["Value", lastTotal ? lastTotal[1] : "—"],
-                 ["Terms", (w.sub || "").split(" · ").slice(-1)[0] || "—"]];
+                 ["Value", lastTotal ? lastTotal[1] : "n/a"],
+                 ["Terms", (w.sub || "").split(" · ").slice(-1)[0] || "n/a"]];
         kindIcon = "M4 6.5h16 M4 12h16 M4 17.5h16 M9 4v16";
       } else if (w.kind === "diff"){
         facts = [["Fields changing", String(changed.length)]]
@@ -2621,7 +2635,7 @@ export default class PulseLogic extends DCLogic {
         kindIcon = "M4 8h9l-2.5-2.5 M20 16h-9l2.5 2.5";
       } else if (w.kind === "doc"){
         facts = [["Sections", String((w.doc || []).length)],
-                 ["Value", lastTotal ? lastTotal[1] : (wDoc.title.match(/€[\d,\.]+/) || ["—"])[0]],
+                 ["Value", lastTotal ? lastTotal[1] : (wDoc.title.match(/€[\d,\.]+/) || ["n/a"])[0]],
                  ["Prepared by", (wDoc.subject || "").indexOf("Helios") > -1 ? "Agent draft" : "Team"]];
         kindIcon = "M6 3.5h9l3.5 3.5v13.5H6Z M15 3.5V7h3.5 M9 12h6 M9 16h4";
       }
@@ -2736,7 +2750,7 @@ export default class PulseLogic extends DCLogic {
        metrics:[
         {label:"Visits completed", value:String(Math.round(38*scale)), change:"+11%", changeColor:delta("up"), hint:"vs previous "+rangeLabel,
          cardBg:"var(--surface)", cardBorder:"var(--track)", ink:INK, bars:bars([.4,.5,.6,.5,.66,.6,.72,.66,.8,.9], LIME)},
-        {label:"Unassigned", value:"1", change:"—", changeColor:delta("flat"), hint:"Thursday 09:00",
+        {label:"Unassigned", value:"1", change:"0", changeColor:delta("flat"), hint:"Thursday 09:00",
          cardBg:"var(--surface)", cardBorder:"var(--warn-soft)", ink:INK, bars:bars([.2,.3,.2,.4,.3,.25,.2,.3,.25,.4], AMBER)},
         {label:"Average duration", value:"1h 48m", change:"−6m", changeColor:delta("up"), hint:"across completed visits",
          cardBg:"var(--surface)", cardBorder:"var(--track)", ink:INK, bars:bars([.6,.55,.6,.5,.55,.48,.5,.46,.44,.4], LIME)},
@@ -2788,25 +2802,25 @@ export default class PulseLogic extends DCLogic {
     const modules = [
       {label:"Pulse Core", id:"core", version:"0.1.0", state:"always installed", bg:"var(--surface)", border:"var(--track)",
        stateBg:"var(--track)", stateColor:BODY,
-       description:"People, organisations, locations, teams and the relationships between them — registered through the same contract a module uses.",
+       description:"Customers, contacts, suppliers, tasks and the relationships between them, registered through the same contract a module uses.",
        contributions:[{n:"31",k:"routes"},{n:"10",k:"nav items"},{n:"21",k:"events"},{n:"7",k:"predicates"},{n:"64",k:"permissions"}]},
-      {label:"Site visits", id:"site-visits", version:"1.0.0", state:"installed", bg:"var(--accent-faint)", border:"var(--accent-line)",
+      {label:"Quotes and freight", id:"mm-commercial", version:"1.0.0", state:"installed", bg:"var(--accent-faint)", border:"var(--accent-line)",
        stateBg:"var(--accent-soft)", stateColor:LIME,
-       description:"The fixture that proves the architecture holds: an entity with a real table, a predicate, two Helios tools, a metric, an event, a trigger, a page and a nav item. Not one line of core changes to install it.",
-       contributions:[{n:"1",k:"entity"},{n:"2",k:"helios tools"},{n:"4",k:"metrics"},{n:"1",k:"predicate"},{n:"1",k:"trigger"}]},
-      {label:"UI showcase", id:"ui-showcase", version:"0.1.0", state:"installed", bg:"var(--surface)", border:"var(--track)",
+       description:"Enquiries, private price books, carrier rate requests, markup and quotations as one traceable flow. Built for Mega Mass Europe without changing core.",
+       contributions:[{n:"5",k:"entities"},{n:"6",k:"helios tools"},{n:"8",k:"metrics"},{n:"4",k:"predicates"},{n:"3",k:"triggers"}]},
+      {label:"FreshBooks layer", id:"mm-finance", version:"1.0.0", state:"installed", bg:"var(--surface)", border:"var(--track)",
        stateBg:"var(--accent-soft)", stateColor:LIME,
-       description:"Component sheet, directory and record fixtures used to review the primitives before they reach a client build.",
-       contributions:[{n:"3",k:"pages"},{n:"1",k:"widget"},{n:"0",k:"tables"}]},
-      {label:"Wholesale", id:"wholesale", version:"—", state:"available", bg:"var(--surface-faint)", border:"var(--track)",
+       description:"Orders, invoices, payments and promises read alongside FreshBooks. Pulse never writes to FreshBooks in this demo.",
+       contributions:[{n:"3",k:"pages"},{n:"2",k:"agents"},{n:"0",k:"writes"}]},
+      {label:"Dealer portal", id:"mm-dealers", version:"n/a", state:"available", bg:"var(--surface-faint)", border:"var(--track)",
        stateBg:"var(--track)", stateColor:FAINT,
-       description:"Orders, price lists, stock and purchase orders. One line in this client's config would add its pages, permissions, events and Helios tools.",
+       description:"Private price lists and reorders for distributors such as Rotterdam Iron Supply, without public prices. One line in this client's config would add it.",
        contributions:[{n:"6",k:"entities"},{n:"9",k:"helios tools"},{n:"12",k:"events"}]}
     ];
 
     const notificationFeed = legacyNotifications(MMS);
 
-    const FEATURES = [["approvals","Approvals"],["automations","Automations"],["insights","Insights"],["customEntities","Custom entities"],["whatsapp","Email drafts channel"],["composio","Composio actions"]];
+    const FEATURES = [["approvals","Approvals"],["automations","Automations"],["insights","Insights"],["customEntities","Custom entities"],["emailDrafts","Email drafts channel"],["composio","Composio actions"]];
     const features = FEATURES.map(f => {
       const on = st.flags[f[0]];
 
@@ -3035,11 +3049,11 @@ export default class PulseLogic extends DCLogic {
     let contextNav, contextHint, searchHint;
     if (page === "Settings"){
       contextNav = ADMIN_GROUPS.map(grp => seg(
-        grp[0].charAt(0) + grp[0].slice(1).toLowerCase(),
+        grp[2] || (grp[0].charAt(0) + grp[0].slice(1).toLowerCase()),
         st.adminGroup === grp[0],
         () => this.setState({adminGroup: st.adminGroup === grp[0] ? null : grp[0]}),
         String(ADMIN_CARDS.filter(c => c.group === grp[0]).length)));
-      contextHint = "ADMIN · 13 AREAS";
+      contextHint = "SETTINGS · " + ADMIN_CARDS.length + " AREAS";
       searchHint = "Search settings";
     } else if (page === "Activity"){
       const actTab = st.actTab || "live-all";
@@ -3234,7 +3248,7 @@ export default class PulseLogic extends DCLogic {
       }))),
       area: (() => {
         const a = ASPECT_DEFS.find(x => x.id === st.aspect) || synthesizeCustomArea(st.aspect);
-        if (!a) return {title: st.aspect, description:"Custom filter — no metrics registered against it yet.",
+        if (!a) return {title: st.aspect, description:"Custom filter: no metrics registered against it yet.",
           owner:"CUSTOM", color:"var(--accent)", metrics:[], chart:[], chartTitle:"No series", chartUnit:"",
           splitTitle:"No breakdown", split:[], tableCols:["Name","Value","Change","Note"], table:[]};
         const isCustom = !ASPECT_DEFS.find(x => x.id === st.aspect);
@@ -3286,7 +3300,7 @@ export default class PulseLogic extends DCLogic {
           })(),
           splitFootLabel: "TOTAL",
           splitFootValue: (() => {
-            if (!a.split.length) return "—";
+            if (!a.split.length) return "n/a";
             const raw = a.split.map(r => String(r[1]));
             const euro = /€/.test(raw[0]);
             const nums = raw.map(v => {
@@ -3529,7 +3543,7 @@ export default class PulseLogic extends DCLogic {
       }),
       scheduleWeek: ["MON","TUE","WED","THU","FRI","SAT","SUN"].map((d, i) => {
         const n = [3, 3, 3, 4, 4, 0, 1][i];
-        return {label:d, count: n ? String(n) : "—",
+        return {label:d, count: n ? String(n) : "0",
           cellStyle: "margin-top:7px;height:44px;border-radius:var(--r-md,14px);display:flex;align-items:center;justify-content:center;"
             + "font-family:" + MONO + ";font-size:13px;"
             + (i === 1 ? "background:var(--accent-fill,var(--accent));color:var(--on-accent);box-shadow:var(--accent-glow,none);font-weight:500"
@@ -3669,7 +3683,7 @@ export default class PulseLogic extends DCLogic {
       miniEmpty: st.miniThread.length === 0,
       miniGreeting: (() => { const h = new Date().getHours();
         const g = h < 5 ? "Still up" : h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : h < 22 ? "Good evening" : "Still going";
-        return g + ", Mac"; })(),
+        return g + ", Niall"; })(),
       miniSuggestions: [
         {label:"What changed today?", run:() => this.askMini("What changed today?")},
         {label:"What needs my decision?", run:() => this.askMini("What needs my decision?")},
@@ -3898,7 +3912,7 @@ export default class PulseLogic extends DCLogic {
             thread:[{kind:"stamp", text:"Just now"},
               {kind:"agent", text: prev.trained
                 ? "trained and ready. i read the ontology and wrote my own prompt from it. what should i pick up first?"
-                : "created. i have no context yet — train me from the ontology and i'll be useful."}]}].concat(prev.agents)};
+                : "created. i have no context yet. train me from the ontology and i'll be useful."}]}].concat(prev.agents)};
       }),
       approvalsEmpty: approvals.length === 0,
       approvalsEmptyTitle: st.approvalFilter === "Decided" ? "Nothing decided yet"
