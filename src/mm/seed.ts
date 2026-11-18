@@ -230,16 +230,16 @@ function genCustomer(country: Country, type: CustomerType, since: number): Custo
 
 export const SUPPLIERS: Supplier[] = [
   { id: "SU-GREY", name: "Greyhound Express", kind: "Carrier", region: "European shipments",
-    lanes: "County Derry to mainland Europe", email: "quotes@greyhound-express.example",
+    lanes: "County Derry to mainland Europe", email: "Rates desk, address to confirm",
     workflow: "Rate requests by email", confirmed: false,
     note: "Named by Niall on the 17 Nov call as the European carrier. Company record not yet confirmed." },
   { id: "SU-HARB", name: "Harbour Freight", kind: "Carrier", region: "UK and Ireland shipments",
-    lanes: "County Derry to Great Britain and Ireland", email: "quotes@harbourfreight.example",
+    lanes: "County Derry to Great Britain and Ireland", email: "Rates desk, address to confirm",
     workflow: "Rate requests by email", confirmed: false,
     note: "Named on the call as 'Harbour Freight Manchester'. A Harbour Freight trades from Trafford Park, Manchester; relationship to confirm." },
   { id: "SU-MMUS", name: "Mega Mass (US)", kind: "Manufacturer", region: "Brand owner",
-    lanes: "Container intake to County Derry", email: "orders@megamass.example",
-    workflow: "Purchase orders and arrival notices", confirmed: false,
+    lanes: "Container intake to County Derry", email: "Ordering contact on file in Gmail",
+    workflow: "Purchase orders and arrival notices", confirmed: true,
     note: "Mega Mass Europe is the official UK and EU distributor of the Mega Mass brand." },
 ];
 const carrierFor = (c: Country) => (c === "GB" || c === "IE" ? "SU-HARB" : "SU-GREY");
@@ -372,7 +372,10 @@ function postcodeFor(c: Customer): string {
   if (c.country === "GB") return pfx + int(1, 20) + " " + int(1, 9) + pick(["AB", "DX", "HL", "QT", "RW", "NP"]);
   if (c.country === "IE") return pfx + (pfx === "D" ? String(int(1, 24)).padStart(2, "0") : "") + " " + pick(["X2K4", "F8R1", "Y6P3", "K2W8"]);
   if (c.country === "NL") return pfx + int(10, 99) + " " + pick(["AB", "KL", "RT", "VD"]);
-  return pfx + String(int(100, 999)).padStart(3, "0");
+  const n = String(int(100, 999)).padStart(3, "0");
+  if (c.country === "AT" || c.country === "BE") return pfx + n.slice(0, 2);
+  if (c.country === "CZ" || c.country === "SK") return (pfx + n).padEnd(3, "0").slice(0, 3) + " " + n.slice(-2);
+  return pfx + n;
 }
 
 /* ── generic enquiry chains, one per bucket ───────────────────────────────── */
@@ -453,7 +456,7 @@ function receiveRate(f: FreightRequest, at: number, cost?: number, ref?: string,
   };
   if (f.status === "Awaiting rate" || f.status === "To request") f.status = "Rate received";
   mail({ recordKind: "freight", recordId: f.id, customerId: c.id, supplierId: f.carrierId, direction: "in",
-    from: carrierName(f.carrierId) + " <" + SUPPLIERS.find((s) => s.id === f.carrierId)!.email + ">", to: "sales@megamasseurope.com", at,
+    from: carrierName(f.carrierId) + " rates desk", to: "sales@megamasseurope.com", at,
     subject: "RE: Freight quotation request, equipment to " + c.city,
     body: "Hi Niall,\n\nThanks for the request. Rate for " + units(f.lines) + " machine" + (units(f.lines) > 1 ? "s" : "") + " from County Derry to " + c.city + ": "
       + (cur === "GBP" ? "£" : "€") + amount.toLocaleString("en-GB") + " ex VAT. Ref " + f.carrierQuote.ref + ". Transit " + f.carrierQuote.eta.toLowerCase()
