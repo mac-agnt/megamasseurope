@@ -134,6 +134,10 @@ const GYM_PATTERNS: Record<string, string[]> = {
   CZ: ["{c} Iron Gym", "Posilovna {c}"],
 };
 const TRADE_PATTERNS = ["{n} Fitness Supply", "{n} Gym Distribution", "{n} Equipment Trading", "{n} Strength Supply"];
+const TRADE_REGION: Record<Country, string> = {
+  GB: "UK", IE: "Irish", NL: "Dutch", IT: "Italia", FR: "France", DE: "German", ES: "Spanish", SK: "Slovak", BE: "Benelux",
+  PL: "Polska", AT: "Alpine", PT: "Portugal", DK: "Nordic", CZ: "Czech", SE: "Scandinavian",
+};
 
 /* ── records being built ──────────────────────────────────────────────────── */
 
@@ -206,7 +210,7 @@ function genCustomer(country: Country, type: CustomerType, since: number): Custo
   for (let tries = 0; tries < 12; tries++) {
     if (type === "Individual buyer") name = person;
     else if (type === "Wholesale distributor" || type === "Reseller") {
-      const region = pick([COUNTRY_NAME[country], city, city + " " + COUNTRY_NAME[country]]);
+      const region = pick([TRADE_REGION[country], city, city]);
       name = pick(TRADE_PATTERNS).replace("{n}", region);
     } else name = pick(GYM_PATTERNS[country] || GYM_PATTERNS.default).replace("{c}", city);
     if (!usedNames.has(name)) break;
@@ -312,9 +316,11 @@ const FACILITY: Record<CustomerType, string> = {
 };
 const HEARD = ["Social Media", "Online search", "Google search ad", "Existing client", "Friends or family", "Business partner", "Social media ad"];
 
-function messageFor(c: Customer, lines: Line[], withPostcode: boolean, postcode: string | null): string {
+function messageFor(c: Customer, lines: Line[], withPostcode: boolean, postcode: string | null, noQty = false): string {
   const p0 = PRODUCT_BY_ID[lines[0].productId].name;
   const where = c.city + (withPostcode && postcode ? " (" + postcode + ")" : "");
+  if (noQty) return "Hi, we're interested in the " + p0 + (lines.length > 1 ? " and a few other machines" : "")
+    + ". Could you send prices and lead times for delivery to " + where + "? Still working out how many we need.";
   if (c.type === "Wholesale distributor" || c.type === "Reseller")
     return "We supply commercial gym equipment in " + COUNTRY_NAME[c.country] + " and would like to talk about stocking Mega Mass. "
       + "A first order would be " + lineText(lines) + ". Please send trade pricing and lead times, delivered to " + where + ".";
@@ -665,6 +671,7 @@ for (let i = 0; i < 40; i++) unanswered.push(freshChain(between(0.05, 1.9), "New
 for (const ch of unanswered.slice(1)) {
   if (R() < 0.38) ch.e.missing.push(weighted([["Delivery postcode", 6], ["Quantity", 2], ["Delivery country", 1]]));
   if (ch.e.missing.includes("Delivery postcode")) ch.e.postcode = null;
+  if (ch.e.missing.length) setMessage(ch.e, messageFor(ch.c, ch.e.lines, false, null, ch.e.missing.includes("Quantity")));
   ch.e.qualification = qualify(ch.c, ch.e.lines, ch.e.missing);
   ch.e.priority = priorityOf(ch.e.qualification, lineValue(ch.e.lines, ch.c.currency));
   ch.e.draftReply = draftReplyFor(ch.c, ch.e.lines, ch.e.missing);
@@ -679,6 +686,8 @@ for (let i = 0; i < 12; i++) {
   ch.e.awaitingCustomer = true;
   ch.e.lastContactAt = ch.e.receivedAt + between(0.3, 0.8) * DAY;
   ch.e.missing = [pick(["Delivery postcode", "Delivery address", "Quantity"])];
+  if (ch.e.missing[0] !== "Quantity") ch.e.postcode = null;
+  setMessage(ch.e, messageFor(ch.c, ch.e.lines, false, null, ch.e.missing[0] === "Quantity"));
   mail({ recordKind: "enquiry", recordId: ch.e.id, customerId: ch.c.id, direction: "out", from: "Niall <sales@megamasseurope.com>",
     to: contactOf(ch.c).email, at: ch.e.lastContactAt, subject: "RE: " + PRODUCT_BY_ID[ch.e.lines[0].productId].name, body: ch.e.draftReply });
   waiting.push(ch);
@@ -1048,8 +1057,8 @@ for (let d = 0; d < 6; d++) {
   const at = ago(d) - (ago(d) % DAY) + 7 * HOUR;
   if (at > NOW) continue;
   run({ agentId: "briefing", at, title: "Morning briefing", outcome: d === 0 ? "Danube approval, Lyon freight delay, three payment promises" : "Briefing delivered to Home", status: "Completed", recordKind: "quote", recordId: "Q-2286", durationSec: int(18, 30) });
-  run({ agentId: "followup", at: at + 2 * HOUR, title: "Daily follow-up scan", outcome: "Follow-ups drafted, none sent: auto-chasing is off", status: "Completed", recordKind: "followup", recordId: "FU-001", durationSec: int(20, 40) });
-  run({ agentId: "receivables", at: at + 1.5 * HOUR, title: "FreshBooks receivables check", outcome: "11 overdue, €46,820, 3 promises tracked", status: "Completed", recordKind: "invoice", recordId: "FB-1047", durationSec: int(14, 26) });
+  if (at + 2 * HOUR <= NOW) run({ agentId: "followup", at: at + 2 * HOUR, title: "Daily follow-up scan", outcome: "Follow-ups drafted, none sent: auto-chasing is off", status: "Completed", recordKind: "followup", recordId: "FU-001", durationSec: int(20, 40) });
+  if (at + 1.5 * HOUR <= NOW) run({ agentId: "receivables", at: at + 1.5 * HOUR, title: "FreshBooks receivables check", outcome: "11 overdue, €46,820, 3 promises tracked", status: "Completed", recordKind: "invoice", recordId: "FB-1047", durationSec: int(14, 26) });
   for (let h = 1; h < 10; h += 3) {
     const t = at + h * HOUR;
     if (t > NOW) continue;
@@ -1102,6 +1111,17 @@ function aiActionFor(e: Enquiry): string {
 for (const e of enquiries) {
   e.aiAction = aiActionFor(e);
   if (e.stage === "New" && !e.replied) e.owner = "Niall";
+}
+/* Rewrite each extraction log line from the record's final state. */
+for (const ev of activity) {
+  if (ev.title !== "Enquiry Agent extracted the requirements") continue;
+  const e = enquiries.find((x) => x.id === ev.recordId);
+  if (e) ev.detail = lineText(e.initialLines || e.lines) + " · " + e.qualification + (e.missing.length ? " · missing " + e.missing.join(", ").toLowerCase() : "");
+}
+for (const r of runs) {
+  if (r.agentId !== "enquiry" || !r.title.startsWith("Read ENQ-")) continue;
+  const e = enquiries.find((x) => x.id === r.recordId);
+  if (e) r.outcome = e.qualification + (e.missing.length ? ", missing " + e.missing.join(", ").toLowerCase() : ", complete");
 }
 /* Ensure Milano's extraction reads exactly as the brief. */
 { const m = enquiries.find((x) => x.id === "ENQ-4562")!; m.aiAction = "Request shipping address"; }

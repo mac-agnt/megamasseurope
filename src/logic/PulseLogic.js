@@ -3120,7 +3120,7 @@ export default class PulseLogic extends DCLogic {
     const roomy = st.w >= 1320, mid = st.w >= 1120;
     const navChars = contextNav.reduce((n, t) => n + String(t.label).length + (t.count ? 3 : 0), 0);
     const navRoom = (st.w - (st.railOpen ? 252 : 68)) - navChars * 8.6 - contextNav.length * 38;
-    const navLong = navRoom < 560;
+    const navLong = navRoom < 720;
     return {
       nav, contextNav, contextHint, searchHint, queueTasks,
       isRecords: page === "Records",
