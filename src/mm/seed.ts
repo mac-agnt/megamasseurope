@@ -441,15 +441,15 @@ function startFreight(ch: Chain, status: FreightRequest["status"], requested: nu
   return f;
 }
 
-function receiveRate(f: FreightRequest, at: number, cost?: number, ref?: string) {
+function receiveRate(f: FreightRequest, at: number, cost?: number, ref?: string, eta?: string, exclusions?: string) {
   const c = custOf(f.customerId);
   const cur = c.currency;
   const amount = cost ?? carrierCost(c.country, units(f.lines));
   f.carrierQuote = {
     cost: amount, currency: cur, ref: ref || (f.carrierId === "SU-HARB" ? "HF-" : "GX-") + int(40000, 89999), receivedAt: at,
-    eta: f.carrierId === "SU-HARB" ? pick(["2 to 3 working days", "Next working day, pallet service"]) : pick(["5 to 7 working days", "4 to 6 working days", "6 to 8 working days"]),
+    eta: eta ?? (f.carrierId === "SU-HARB" ? pick(["2 to 3 working days", "Next working day, pallet service"]) : pick(["5 to 7 working days", "4 to 6 working days", "6 to 8 working days"])),
     validUntil: new Date(at + 14 * DAY).toISOString(),
-    exclusions: pick(["Tail-lift not included", "Kerbside only, no unloading", "Excludes duties and customs clearance", "Tail-lift not included; no unloading"]),
+    exclusions: exclusions ?? pick(["Tail-lift not included", "Kerbside only, no unloading", "Excludes duties and customs clearance", "Tail-lift not included; no unloading"]),
   };
   if (f.status === "Awaiting rate" || f.status === "To request") f.status = "Rate received";
   mail({ recordKind: "freight", recordId: f.id, customerId: c.id, supplierId: f.carrierId, direction: "in",
@@ -539,9 +539,7 @@ const S = {
   f.destination = "Bratislava 821 08, Slovakia";
   f.service = "Palletised, forklift unload on site";
   requestSent(f, ago(6, 5));
-  receiveRate(f, ago(1, 2), 2100, "GX-58213");
-  f.carrierQuote!.eta = "5 to 7 working days";
-  f.carrierQuote!.exclusions = "Tail-lift not included; customer forklift on site";
+  receiveRate(f, ago(1, 2), 2100, "GX-58213", "5 to 7 working days", "Tail-lift not included; customer forklift on site");
   const ct = contactOf(c);
   mail({ recordKind: "enquiry", recordId: e.id, customerId: c.id, direction: "out", from: "Niall <sales@megamasseurope.com>", to: ct.email, at: ago(8, 6),
     subject: "RE: New quote request: T-Bar Linear Row",
@@ -623,9 +621,7 @@ const S = {
   f.destination = "Manchester M4 6BF, United Kingdom";
   f.service = "Next-day pallet, tail-lift";
   requestSent(f, ago(3, 5));
-  receiveRate(f, ago(0, 3), 350, "HF-71520");
-  f.carrierQuote!.eta = "Next working day, pallet service";
-  f.carrierQuote!.exclusions = "Tail-lift included; kerbside only";
+  receiveRate(f, ago(0, 3), 350, "HF-71520", "Next working day, pallet service", "Tail-lift included; kerbside only");
   run({ agentId: "quote", at: ago(0, 2), title: "Assembled Q-2293 for Northern Power Gym", outcome: "£3,515 ex VAT, waiting for Niall", status: "Waiting on Niall",
     recordKind: "quote", recordId: q.id, durationSec: 12 });
   act({ at: ago(0, 2), actor: "Quote Agent", actorKind: "agent", source: "Agent", title: "Quote Agent prepared the quotation",

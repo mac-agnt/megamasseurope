@@ -381,7 +381,11 @@ export function simulateCarrierReply(freightId: string, cost?: number) {
 
 export function setMarkup(freightId: string, pct: number) {
   const v = Math.max(0, Math.min(60, Math.round(pct * 10) / 10));
-  mm.set((s) => ({ freight: s.freight.map((f) => (f.id === freightId ? { ...f, markupPct: v, charge: undefined } : f)) }));
+  mm.set((s) => {
+    const freight = s.freight.map((f) => (f.id === freightId ? { ...f, markupPct: v, charge: undefined } : f));
+    const quoteId = freight.find((f) => f.id === freightId)?.quoteId;
+    return { freight, approvals: quoteId ? syncAmounts({ ...s, freight }, s.quotes, quoteId) : s.approvals };
+  });
 }
 
 export function markBooked(orderId: string) {
