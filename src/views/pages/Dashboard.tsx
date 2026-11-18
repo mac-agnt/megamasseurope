@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import { arr, cat, css, cx, pc, txt } from "../../runtime/template";
+import DashboardToday from "../../mm/home/DashboardToday";
 
 type Props = { v: any };
 
@@ -7,6 +8,7 @@ export default function Dashboard({ v }: Props) {
   return (
     <>
       <div style={{"width":"100%","maxWidth":"1280px","margin":"0 auto","boxSizing":"border-box","padding":"22px 32px 40px","animation":"pageIn .7s var(--ease) both"}}>
+        <DashboardToday />
         <div style={{"display":"flex","alignItems":"center","gap":"10px","padding":"18px 4px 16px"}}>
           <div style={css(v.aspectTrack)}>
             <span style={css(v.aspectThumb)} />

@@ -18,6 +18,9 @@ import AgentStudio from "./overlays/AgentStudio";
 import NewRecordDialog from "./overlays/NewRecordDialog";
 import CommandPalette from "./overlays/CommandPalette";
 import BackgroundGallery from "./overlays/BackgroundGallery";
+import MMPage from "../mm/MMPage";
+import Overlay from "../mm/panel/Overlay";
+import ActivityMM from "../mm/pages/ActivityMM";
 
 type Props = { v: any };
 
@@ -32,12 +35,10 @@ export default function AppShell({ v }: Props) {
         <span style={css(v.railThumbStyle)} />
         <div style={css(cat(v.railRowStyle, "margin-bottom:22px"))}>
           <button className={cx("ix0", "ix1")} onClick={v.toggleRail} title={v.railLabel} style={{"width":"36px","height":"36px","flex":"none","border":"0","borderRadius":"var(--cta-r,11px)","background":"var(--accent-fill,var(--accent))","color":"var(--on-accent)","boxShadow":"var(--accent-glow,none)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","fontSize":"13px","fontWeight":"600","padding":"0","transition":"transform .2s var(--ease)"}}>
-            {"K"}
+            <span style={{"fontSize":"11px","fontWeight":"800","letterSpacing":"-.4px"}}>{"MM"}</span>
           </button>
           <span style={css(v.brandStyle)}>
-            <span style={{"display":"block","fontSize":"15px","fontWeight":"600","letterSpacing":"-.3px","color":"var(--ink)"}}>
-              {"Kilbride Group"}
-            </span>
+            <img src="/brand/megamass-logo.png" alt="Mega Mass Europe" style={{"display":"block","height":"21px","width":"auto","maxWidth":"100%"}} />
             <span style={{"display":"block","marginTop":"2px","fontSize":"9px","fontWeight":"500","letterSpacing":".16em","color":"var(--accent)"}}>
               {"PULSE · OPERATIONS"}
             </span>
@@ -96,14 +97,14 @@ export default function AppShell({ v }: Props) {
               </div>
               <div style={{"display":"flex","alignItems":"center","gap":"11px","marginTop":"12px"}}>
                 <div style={{"width":"40px","height":"40px","flex":"none","borderRadius":"999px","background":"var(--accent-soft)","color":"var(--accent)","display":"flex","alignItems":"center","justifyContent":"center","fontSize":"13px","fontWeight":"600"}}>
-                  {"MK"}
+                  {"NI"}
                 </div>
                 <div style={{"minWidth":"0"}}>
                   <div style={{"fontSize":"17px","fontWeight":"600","letterSpacing":"-.3px","color":"var(--ink)","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"}}>
-                    {"Martin Kilbride"}
+                    {"Niall"}
                   </div>
                   <div style={{"fontSize":"12.5px","color":"var(--faint)","marginTop":"2px","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"}}>
-                    {"Kilbride Group · Owner"}
+                    {"Mega Mass Europe · Owner"}
                   </div>
                 </div>
               </div>
@@ -143,14 +144,14 @@ export default function AppShell({ v }: Props) {
             </button>
             <div style={css(cat(v.railRowStyle, "margin-top:10px;padding:12px 10px;border-top:1px solid var(--border)"))}>
               <div style={{"width":"40px","height":"40px","flex":"none","borderRadius":"12px","background":"var(--surface-2)","border":"1px solid var(--border)","color":"var(--body)","display":"flex","alignItems":"center","justifyContent":"center","fontSize":"12px","fontWeight":"600","cursor":"pointer"}}>
-                {"MK"}
+                {"NI"}
               </div>
               <span style={css(v.brandStyle)}>
                 <span style={{"display":"block","fontSize":"14px","fontWeight":"500","color":"var(--ink)"}}>
-                  {"Martin Kilbride"}
+                  {"Niall"}
                 </span>
                 <span style={{"display":"block","marginTop":"2px","fontSize":"12px","color":"var(--faint)"}}>
-                  {"Kilbride Group · Owner"}
+                  {"Mega Mass Europe · Owner"}
                 </span>
               </span>
             </div>
@@ -311,7 +312,7 @@ export default function AppShell({ v }: Props) {
                         <>
                           <div style={{"minWidth":"0"}}>
                             <div style={{"fontSize":"12px","fontWeight":"500","lineHeight":"1.2","whiteSpace":"nowrap"}}>
-                              {"Martin Kilbride"}
+                              {"Niall"}
                             </div>
                             <div style={{"fontSize":"10.5px","color":"var(--faint)","lineHeight":"1.2"}}>
                               {"Owner"}
@@ -391,6 +392,7 @@ export default function AppShell({ v }: Props) {
           {v.isChat && <Home v={v} />}
           {v.isWork && <Work v={v} />}
           {v.isRecords && <Records v={v} />}
+          {v.mmPage && <MMPage page={v.mmPage} tab={v.mmTab} />}
           {v.rec?.isContacts && (
             <>
               <div style={{"display":"flex","flexDirection":"column","gap":"14px"}}>
@@ -471,7 +473,8 @@ export default function AppShell({ v }: Props) {
           )}
           {v.rec?.isFiles && <RecordsFiles v={v} />}
           {v.rec?.isOntology && <RecordsOntology v={v} />}
-          {v.isActivity && <Activity v={v} />}
+          {v.isActivity && !v.actMM && <Activity v={v} />}
+          {v.actMM && <ActivityMM tab={v.actMM} />}
           {v.act?.detailOpen && (
             <>
               <div onClick={v.act?.closeDetail} style={{"position":"fixed","inset":"0","zIndex":"68","background":"var(--scrim)","backdropFilter":"blur(6px)","display":"flex","justifyContent":"flex-end"}}>
@@ -596,6 +599,7 @@ export default function AppShell({ v }: Props) {
       )}
       {v.miniOpen && <HeliosMini v={v} />}
       {v.workViewer?.open && <WorkViewer v={v} />}
+      <Overlay />
       {v.builderOpen && <AgentStudio v={v} />}
       {v.detail?.open && (
         <>

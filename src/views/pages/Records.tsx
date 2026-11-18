@@ -10,7 +10,7 @@ export default function Records({ v }: Props) {
         {v.rec?.hasHero && (
           <>
             <div style={{"position":"relative"}} />
-            <div style={{"position":"relative","display":"flex","flexDirection":"column","alignItems":"center","textAlign":"center","padding":"64px 0 52px"}}>
+            <div style={{"position":"relative","display":"flex","flexDirection":"column","alignItems":"center","textAlign":"center","padding": v.rec?.heroSearch ? "64px 0 52px" : "40px 0 26px"}}>
               <button className={cx("ix12", "ixo")} onClick={v.rec?.openNew} title="New record" style={{"position":"absolute","right":"0","top":"20px","width":"40px","height":"40px","border":"1px solid var(--border)","borderRadius":"var(--r-ctl,14px)","background":"var(--surface)","color":"var(--ink)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","backdropFilter":"blur(24px)","transition":"background .2s var(--ease),transform .2s var(--ease),border-color .2s var(--ease)"}}>
                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round">
                   <path d="M12 5v14 M5 12h14" />
@@ -26,7 +26,8 @@ export default function Records({ v }: Props) {
               <p style={{"margin":"14px 0 0","maxWidth":"520px","fontSize":"15px","lineHeight":"1.6","color":"var(--dim)","textWrap":"pretty"}}>
                 {txt(v.rec?.blurb)}
               </p>
-              <div style={{"width":"min(680px,100%)","marginTop":"30px"}}>
+              {v.rec?.heroSearch && (<>
+<div style={{"width":"min(680px,100%)","marginTop":"30px"}}>
                 <div className="ixz" style={{"display":"flex","alignItems":"center","gap":"12px","padding":"13px 15px 13px 19px","background":"var(--hero-field)","border":"1px solid var(--border)","borderRadius":"var(--card-r,18px)","boxShadow":"0 18px 44px rgba(0,0,0,.28)","backdropFilter":"blur(20px) saturate(1.4)","transition":"border-color .24s var(--ease),box-shadow .3s var(--ease)"}}>
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" strokeWidth="1.9" strokeLinecap="round" style={{"flex":"none"}}>
                     <path d="m21 21-4.3-4.3 M17 11a6 6 0 1 1-12 0 6 6 0 0 1 12 0" />
@@ -74,6 +75,7 @@ export default function Records({ v }: Props) {
                   <path d="M12 5v14 M5.5 12.5 12 19l6.5-6.5" />
                 </svg>
               </div>
+</>)}
             </div>
           </>
         )}

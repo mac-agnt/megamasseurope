@@ -93,7 +93,11 @@ export function stockOf(s: MMState, p: Product) {
 
 export const unanswered = (s: MMState) => s.enquiries.filter((e) => e.stage === "New" && !e.replied);
 export const awaitingCustomer = (s: MMState) => s.enquiries.filter((e) => e.stage === "New" && e.replied);
-export const quotesForApproval = (s: MMState) => s.quotes.filter((q) => q.status === "Ready for Review");
+/** Quotes waiting on Niall. A quote whose approval he put on hold leaves the queue. */
+export const quotesForApproval = (s: MMState) => {
+  const held = new Set(s.approvals.filter((a) => a.status === "Held").map((a) => a.recordId));
+  return s.quotes.filter((q) => q.status === "Ready for Review" && !held.has(q.id));
+};
 export const freightOutstanding = (s: MMState) => s.freight.filter((f) => f.status === "Awaiting rate");
 export const freightToRequest = (s: MMState) => s.freight.filter((f) => f.status === "To request");
 export const followUpsToReview = (s: MMState) => s.followUps.filter((f) => f.status === "Awaiting review");

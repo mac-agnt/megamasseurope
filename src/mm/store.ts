@@ -74,7 +74,15 @@ function patchQuote(s: MMState, id: string, patch: Partial<Quote>): Quote[] {
   return s.quotes.map((q) => (q.id === id ? { ...q, ...patch, updatedAt: now() } : q));
 }
 function resolveApprovals(s: MMState, recordId: string, status: Approval["status"]): Approval[] {
-  return s.approvals.map((a) => (a.recordId === recordId && (a.status === "Ready" || a.status === "Needs action") ? { ...a, status } : a));
+  return s.approvals.map((a) => (a.recordId === recordId && (a.status === "Ready" || a.status === "Needs action" || (status === "Approved" && a.status === "Held")) ? { ...a, status } : a));
+}
+
+/* Keep an open approval's amount in step with the quote after builder edits. */
+function syncAmounts(s: MMState, quotes: Quote[], quoteId: string): Approval[] {
+  const q = quotes.find((x) => x.id === quoteId);
+  if (!q) return s.approvals;
+  const total = quoteTotal({ ...s, quotes }, q);
+  return s.approvals.map((a) => (a.recordId === quoteId && a.kind === "Customer quotation" && a.status !== "Approved" ? { ...a, amount: total } : a));
 }
 
 /** Approve and send (simulated) a customer quotation. */
@@ -142,18 +150,27 @@ export function keepListPrice(quoteId: string) {
 }
 
 export function setLine(quoteId: string, idx: number, patch: Partial<QuoteLine>) {
-  mm.set((s) => ({ quotes: s.quotes.map((q) => (q.id === quoteId
-    ? { ...q, updatedAt: now(), lines: q.lines.map((l, i) => (i === idx ? { ...l, ...patch } : l)) } : q)) }));
+  mm.set((s) => {
+    const quotes = s.quotes.map((q) => (q.id === quoteId
+      ? { ...q, updatedAt: now(), lines: q.lines.map((l, i) => (i === idx ? { ...l, ...patch } : l)) } : q));
+    return { quotes, approvals: syncAmounts(s, quotes, quoteId) };
+  });
 }
 export function addLine(quoteId: string, productId: string) {
-  mm.set((s) => ({ quotes: s.quotes.map((q) => {
-    if (q.id !== quoteId) return q;
-    const price = q.currency === "GBP" ? PRODUCT_BY_ID[productId].gbp : PRODUCT_BY_ID[productId].eur;
-    return { ...q, updatedAt: now(), lines: q.lines.concat([{ productId, qty: 1, unitPrice: price, listPrice: price }]) };
-  }) }));
+  mm.set((s) => {
+    const quotes = s.quotes.map((q) => {
+      if (q.id !== quoteId) return q;
+      const price = q.currency === "GBP" ? PRODUCT_BY_ID[productId].gbp : PRODUCT_BY_ID[productId].eur;
+      return { ...q, updatedAt: now(), lines: q.lines.concat([{ productId, qty: 1, unitPrice: price, listPrice: price }]) };
+    });
+    return { quotes, approvals: syncAmounts(s, quotes, quoteId) };
+  });
 }
 export function removeLine(quoteId: string, idx: number) {
-  mm.set((s) => ({ quotes: s.quotes.map((q) => (q.id === quoteId ? { ...q, updatedAt: now(), lines: q.lines.filter((_, i) => i !== idx) } : q)) }));
+  mm.set((s) => {
+    const quotes = s.quotes.map((q) => (q.id === quoteId ? { ...q, updatedAt: now(), lines: q.lines.filter((_, i) => i !== idx) } : q));
+    return { quotes, approvals: syncAmounts(s, quotes, quoteId) };
+  });
 }
 export function setBuilderQuote(quoteId: string) { mm.set(() => ({ builderQuoteId: quoteId })); }
 
