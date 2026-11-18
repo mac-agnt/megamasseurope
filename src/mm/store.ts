@@ -403,7 +403,7 @@ export function markDispatched(orderId: string) {
   const c = customerOf(s0, o.customerId);
   mm.set((s) => ({
     seq: s.seq + 1,
-    orders: s.orders.map((x) => (x.id === orderId ? { ...x, status: "Dispatched", dispatchedAt: now() } : x)),
+    orders: s.orders.map((x) => (x.id === orderId ? { ...x, status: "Dispatched", dispatchedAt: now(), eta: "In transit" } : x)),
     freight: s.freight.map((f) => (f.id === o.freightId ? { ...f, status: "Dispatched" } : f)),
     reservations: s.reservations.filter((r) => !(r.orderId === orderId && r.source === "Warehouse stock")),
     products: s.products.map((p) => {
@@ -414,6 +414,20 @@ export function markDispatched(orderId: string) {
       detail: orderId + " left County Derry for " + c.city + ".", recordKind: "order", recordId: orderId, customerId: c.id })].concat(s.activity),
   }));
   toast("Dispatched", orderId + " · " + c.name);
+}
+
+export function markDelivered(orderId: string) {
+  const s0 = mm.get();
+  const o = ix(s0).order[orderId];
+  const c = customerOf(s0, o.customerId);
+  mm.set((s) => ({
+    seq: s.seq + 1,
+    orders: s.orders.map((x) => (x.id === orderId ? { ...x, status: "Delivered", deliveredAt: now(), eta: "Delivered" } : x)),
+    freight: s.freight.map((f) => (f.id === o.freightId ? { ...f, status: "Delivered" } : f)),
+    activity: [evt(s, { actor: "Niall", actorKind: "person", source: "Pulse", title: "Delivery confirmed",
+      detail: orderId + " delivered to " + c.name + ".", recordKind: "order", recordId: orderId, customerId: c.id })].concat(s.activity),
+  }));
+  toast("Delivered", orderId + " · " + c.name);
 }
 
 /* ── finance ──────────────────────────────────────────────────────────────── */
@@ -438,7 +452,7 @@ export function recordPayment(invoiceId: string, amount?: number) {
     runs: [agentRun(s, { agentId: "receivables", title: "Matched payment on " + invoiceId, outcome: money(paid, inv.currency) + (full ? ", invoice cleared" : ", balance remains"),
       status: "Completed", recordKind: "invoice", recordId: invoiceId, durationSec: 4 })].concat(s.runs),
   }));
-  toast("Payment recorded", invoiceId + " · " + money(paid, inv.currency) + " · " + c.name);
+  toast("Payment recorded", invoiceId + " · " + money(paid, inv.currency) + " · " + c.name + ". Simulated, FreshBooks unchanged.");
 }
 
 export function sendPaymentFollowUp(invoiceId: string) {

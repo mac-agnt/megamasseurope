@@ -1,6 +1,15 @@
-import { Page, PageHead } from "../ui";
+import Catalogue from "./stock/Catalogue";
+import Availability from "./stock/Availability";
+import Incoming from "./stock/Incoming";
+import Reservations from "./stock/Reservations";
 
-/* Placeholder: replaced by the module build. */
+/* Products & Stock: kept simple on purpose. In stock, reserved, available,
+   incoming. Not a warehouse system. */
 export default function Stock({ tab }: { tab: string }) {
-  return <Page><PageHead title="Stock" sub={tab} /></Page>;
+  switch (tab) {
+    case "availability": return <Availability />;
+    case "incoming": return <Incoming />;
+    case "reservations": return <Reservations />;
+    default: return <Catalogue />;
+  }
 }
