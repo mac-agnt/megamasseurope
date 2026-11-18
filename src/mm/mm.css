@@ -1,0 +1,12 @@
+/* Mega Mass module interactions (Pulse tokens only). */
+.mm-card-click{transition:border-color .2s var(--ease),transform .2s var(--ease),background .2s var(--ease)}
+.mm-card-click:hover{border-color:var(--border-strong) !important;transform:translateY(-1px)}
+.mm-row{transition:background .16s var(--ease)}
+.mm-row:hover{background:var(--surface-2)}
+.mm-btn:hover:not(:disabled){filter:brightness(1.08)}
+.mm-btn:active:not(:disabled){transform:translateY(1px) scale(.98)}
+.mm-scroll{scrollbar-width:none}
+.mm-scroll::-webkit-scrollbar{width:0;height:0}
+@keyframes mmToastIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes mmPanelIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.mm-card-click:hover{transform:none}}

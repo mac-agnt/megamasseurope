@@ -32,14 +32,25 @@ const ICONS = {
   records:"M6.4 3.6h7.4l4.2 4.2v12.6H6.4V3.6Z M13.4 3.8v4.2h4.2 M9 12.4h6 M9 16h4",
   tree:"M4.5 6h5 M4.5 12h5 M4.5 18h5 M12.5 6h7 M12.5 12h7 M12.5 18h7",
   graph:"M7 7.4a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8Z M17.6 10.4a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8Z M9.4 21.4a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8Z M8.6 6.4l7.6 2.6 M15.8 11.4l-5.6 5.2",
-  bell:"M6 8.5a6 6 0 0 1 12 0c0 6.5 2.6 8.5 2.6 8.5H3.4S6 15 6 8.5Z M10.3 20.5a1.94 1.94 0 0 0 3.4 0"
+  bell:"M6 8.5a6 6 0 0 1 12 0c0 6.5 2.6 8.5 2.6 8.5H3.4S6 15 6 8.5Z M10.3 20.5a1.94 1.94 0 0 0 3.4 0",
+  /* Mega Mass modules */
+  mmInbox:"M3 13h4l1.5 3h7l1.5-3h4 M3 13l2.4-7A2 2 0 0 1 7.3 4.6h9.4a2 2 0 0 1 1.9 1.4L21 13v4.4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V13Z",
+  mmQuote:"M6.4 3.6h7.4l4.2 4.2v12.6H6.4V3.6Z M13.4 3.8v4.2h4.2 M9 12h6 M9 15.6h6 M9 8.4h2.6",
+  mmTruck:"M2.8 6.4h11v9.4h-11z M13.8 9.4h3.9l2.9 3.1v3.3h-6.8 M6.6 18.4a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6Z M16.8 18.4a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6Z",
+  mmOrder:"M4 7.5 12 3.5l8 4v9L12 20.5l-8-4v-9Z M4 7.5l8 4 8-4 M12 11.5v9",
+  mmBox:"M5 9.5h14v10H5z M3.6 5.5h16.8v4H3.6z M10 13h4",
+  mmChart:"M4.5 19.5V13 M9.7 19.5V7.5 M14.9 19.5v-8 M20 19.5V5"
 };
 
 /* Ontology stays first and is never removed (PulseLogic enforces this too). */
 const REC_SECTIONS = [
-  {id:"ontology", label:"Ontology", blurb:"How every record connects: entities, predicates and the paths between them."},
-  {id:"files", label:"Files", blurb:"Documents, contracts and certificates — indexed where Helios can read them."},
-  {id:"contacts", label:"Contacts", blurb:"Every person the business deals with, staff and external."}
+  {id:"ontology", label:"Ontology", blurb:"How every record connects: customer, enquiry, machine, freight, quote, invoice, order and shipment."},
+  {id:"files", label:"Files", blurb:"Quotes, carrier rates, price lists and catalogues, indexed so the agents can read them."},
+  {id:"contacts", label:"Contacts", blurb:"Everyone Mega Mass deals with: customers, carriers and the team."},
+  {id:"customers", label:"Customers", blurb:"Gyms, distributors and buyers across the UK and Europe."},
+  {id:"suppliers", label:"Suppliers", blurb:"Carriers and the brand owner, with how each one is worked."},
+  {id:"products", label:"Products", blurb:"The Mega Mass range as a record: specs, stock and demand."},
+  {id:"orders", label:"Orders", blurb:"Every confirmed order linked to its quote, FreshBooks invoice and freight."}
 ];
 
 const CONTACTS = [
@@ -460,7 +471,12 @@ const STREAM_DEFS = [
 const NAV = [
   {label:"Home", icon:"helios", page:"Home"},
   {label:"Agents", icon:"navAgents", page:"Agents"},
-  {label:"Dashboard", icon:"navDash", page:"Dashboard", dot:true},
+  {label:"Enquiries", icon:"mmInbox", page:"Enquiries", dot:true},
+  {label:"Quotes", icon:"mmQuote", page:"Quotes"},
+  {label:"Freight", icon:"mmTruck", page:"Freight"},
+  {label:"Orders", icon:"mmOrder", page:"Orders"},
+  {label:"Products & Stock", icon:"mmBox", page:"Stock"},
+  {label:"Insights", icon:"mmChart", page:"Insights"},
   {label:"Work", icon:"navWork", page:"Work"},
   {label:"Records", icon:"navRecords", page:"Records"},
   {label:"Activity", icon:"pulseLine", page:"Activity", dot:true}
