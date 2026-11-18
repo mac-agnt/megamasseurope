@@ -4,7 +4,6 @@ import Freight from "./pages/Freight";
 import Orders from "./pages/Orders";
 import Stock from "./pages/Stock";
 import Insights from "./pages/Insights";
-import AgentsOverview from "./pages/AgentsOverview";
 import AgentRuns from "./pages/AgentRuns";
 import RecordsMM from "./pages/RecordsMM";
 
@@ -17,7 +16,7 @@ export default function MMPage({ page, tab }: { page: string; tab: string }) {
     case "Orders": return <Orders tab={tab} />;
     case "Stock": return <Stock tab={tab} />;
     case "Insights": return <Insights tab={tab} />;
-    case "Agents": return tab === "runs" ? <AgentRuns tab={tab} /> : <AgentsOverview tab={tab} />;
+    case "Agents": return tab === "runs" ? <AgentRuns tab={tab} /> : null;
     case "Records": return <RecordsMM tab={tab} />;
     default: return null;
   }

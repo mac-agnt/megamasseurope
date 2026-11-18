@@ -60,7 +60,6 @@ export const MODULE_BY_PAGE: Record<string, Module> = Object.fromEntries(MODULES
 
 /* Tabs added to Pulse's own pages. */
 export const AGENT_TABS: Tab[] = [
-  { id: "overview", label: "Overview" },
   { id: "details", label: "Agent Details" },
   { id: "runs", label: "Run History" },
 ];

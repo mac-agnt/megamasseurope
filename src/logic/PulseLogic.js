@@ -90,7 +90,7 @@ const NAV = (() => {
 
 /* All state and behaviour for Pulse. renderVals() returns the flat object the views render from. */
 export default class PulseLogic extends DCLogic {
-  state = { w: typeof window === "undefined" ? 1440 : window.innerWidth, theme:"harbour", page:"Home", mmTabs:{}, agentsTab:"overview", actTab:"live-all", draft:"", query:"", thread:[], typed:0, paletteOpen:false, showNotifs:false, palScope:"All", palSel:0, palRecent:["Danube Strength","Lyon Performance Club"],
+  state = { w: typeof window === "undefined" ? 1440 : window.innerWidth, theme:"harbour", page:"Home", mmTabs:{}, agentsTab:"details", actTab:"live-all", draft:"", query:"", thread:[], typed:0, paletteOpen:false, showNotifs:false, palScope:"All", palSel:0, palRecent:["Danube Strength","Lyon Performance Club"],
             done:{}, resolved:{}, approved:{}, inboxFilter:"All", approvalFilter:"Awaiting you", open:null, range:"30d",
             workDoc:null, workDocTab:"work",
             queue:"mine", recordTab:"Overview", record:"person", hovered:null, hoverLabel:"", hoverHint:"", hoverTop:0,
@@ -1167,7 +1167,7 @@ export default class PulseLogic extends DCLogic {
     if (MODULE_BY_PAGE[page]){
       if (tab) this.setState(p => ({mmTabs: Object.assign({}, p.mmTabs, {[page]: tab})}));
       this.go(page);
-    } else if (page === "Agents"){ this.setState({agentsTab: tab || "overview"}); this.go("Agents"); }
+    } else if (page === "Agents"){ this.setState({agentsTab: tab || "details"}); this.go("Agents"); }
     else if (page === "Records"){ this.setState({recSection: tab || "ontology"}); this.go("Records"); }
     else if (page === "Work"){ this.setState({workSection: tab || "tasks"}); this.go("Work"); }
     else if (page === "Activity"){ this.setState({actTab: tab || "live-all", actKpi: tab === "live-ai" ? "ai" : "all"}); this.go("Activity"); }
@@ -3080,7 +3080,7 @@ export default class PulseLogic extends DCLogic {
       contextHint = page === "Home" ? "PULSE · " + mmHeadline(MMS).approvals + " WAITING ON YOU" : "MEGA MASS · " + areaLabel.toUpperCase();
       searchHint = page === "Dashboard" ? "Search the dashboard" : "Search every record you can see";
     } else if (page === "Agents"){
-      contextNav = AGENT_TABS.map(t => seg(t.label, (st.agentsTab || "overview") === t.id, () => this.setState({agentsTab:t.id})));
+      contextNav = AGENT_TABS.map(t => seg(t.label, (st.agentsTab || "details") === t.id, () => this.setState({agentsTab:t.id})));
       contextHint = "AGENTS · " + Object.values(MMS.controls.agentsOn).filter(Boolean).length + " ON";
       searchHint = "Search agents";
     } else if (MODULE_BY_PAGE[page]){
@@ -3165,13 +3165,13 @@ export default class PulseLogic extends DCLogic {
       settingsInlineStyle: inlineStyle(st.railHov === "settings", page === "Settings"),
 
       /* header zones */
-      isAgents: page === "Agents" && st.agentsTab === "details",
+      isAgents: page === "Agents" && st.agentsTab !== "runs",
       showPillNav: true,
       mmPage: MODULE_BY_PAGE[page] ? page
-        : (page === "Agents" && st.agentsTab !== "details") ? "Agents"
+        : (page === "Agents" && st.agentsTab === "runs") ? "Agents"
         : (page === "Records" && ["customers","suppliers","products","orders"].indexOf(recSec.id) > -1) ? "Records" : "",
       mmTab: MODULE_BY_PAGE[page] ? ((st.mmTabs || {})[page] || MODULE_BY_PAGE[page].tabs[0].id)
-        : page === "Agents" ? (st.agentsTab || "overview") : page === "Records" ? recSec.id : "",
+        : page === "Agents" ? (st.agentsTab || "details") : page === "Records" ? recSec.id : "",
       actMM: page === "Activity" && (st.actTab === "emails" || st.actTab === "audit") ? st.actTab : "",
 
       /* home widgets */
