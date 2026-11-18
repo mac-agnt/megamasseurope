@@ -1061,7 +1061,7 @@ for (let d = 0; d < 6; d++) {
     run({ agentId: "ops", at: t, title: "Stalled-work sweep", outcome: h === 7 && d === 0 ? "Lyon rate request over 3 working days" : "Nothing stalled beyond limits", status: h === 7 && d === 0 ? "Flagged" : "Completed", recordKind: "freight", recordId: "FR-1211", durationSec: int(3, 9) });
   }
 }
-run({ agentId: "intel", at: ago(2, 2), title: "Weekly sales intelligence", outcome: "T-Bar Linear Row is 31% of machines requested; Italy and Netherlands up", status: "Completed", recordKind: "product", recordId: SKU.tbar, durationSec: 41 });
+
 run({ agentId: "ops", at: ago(0, 1), title: "Ageing enquiry check", outcome: "4 enquiries without a first response past 48 hours", status: "Flagged", recordKind: "enquiry", recordId: unanswered[1].e.id, durationSec: 6 });
 run({ agentId: "ops", at: ago(0, 1.2), title: "Website availability check", outcome: "T-Bar Linear Row page still says 'Estimated arrival October 2026'", status: "Flagged", recordKind: "product", recordId: SKU.tbar, durationSec: 8 });
 run({ agentId: "receivables", at: ago(0, 7), title: "Prepared payment follow-ups", outcome: "Rheinland, Torino, Bordeaux drafts waiting for Niall", status: "Waiting on Niall", recordKind: "invoice", recordId: "FB-1047", durationSec: 22 });
@@ -1118,6 +1118,20 @@ for (const r of runs) {
   if (r.agentId !== "enquiry" || !r.title.startsWith("Read ENQ-")) continue;
   const e = enquiries.find((x) => x.id === r.recordId);
   if (e) r.outcome = e.qualification + (e.missing.length ? ", missing " + e.missing.join(", ").toLowerCase() : ", complete");
+}
+/* Sales Intelligence: the weekly read, worded from the records themselves. */
+{
+  const units = enquiries.reduce((n, e) => n + e.lines.reduce((m, l) => m + l.qty, 0), 0);
+  const tbar = enquiries.reduce((n, e) => n + e.lines.filter((l) => l.productId === SKU.tbar).reduce((m, l) => m + l.qty, 0), 0);
+  const byCountry: Record<string, number> = {};
+  for (const e of enquiries) {
+    const c = customers.find((x) => x.id === e.customerId)!;
+    if (c.country !== "GB" && c.country !== "IE") byCountry[c.country] = (byCountry[c.country] || 0) + 1;
+  }
+  const top = Object.entries(byCountry).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([k]) => COUNTRY_NAME[k as Country]);
+  runs.push({ id: "RN-" + String(++nRun).padStart(5, "0"), agentId: "intel", at: ago(2, 2), title: "Weekly sales intelligence",
+    outcome: "T-Bar Linear Row is " + Math.round((tbar / Math.max(1, units)) * 100) + "% of machines requested; " + top.join(" and ") + " lead continental enquiries",
+    status: "Completed", recordKind: "product", recordId: SKU.tbar, durationSec: 41 });
 }
 /* Ensure Milano's extraction reads exactly as the brief. */
 { const m = enquiries.find((x) => x.id === "ENQ-4562")!; m.aiAction = "Request shipping address"; }

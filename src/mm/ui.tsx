@@ -190,6 +190,8 @@ const STATUS_TONE: Record<string, Tone> = {
   "Not started": "neutral", "In progress": "info", Waiting: "warn", Done: "ok",
   // reservations
   Reserved: "accent", "Awaiting arrival": "warn", "Released to dispatch": "ok",
+  // agent runs
+  Completed: "ok", "Waiting on Niall": "warn", Flagged: "bad", Skipped: "neutral",
 };
 export function Status({ s }: { s: string }) {
   return <Badge tone={STATUS_TONE[s] || "neutral"} dot>{s}</Badge>;
